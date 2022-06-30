@@ -11,6 +11,7 @@
 		0031670028648D7E002FCDE5 /* MovieModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 003166FF28648D7E002FCDE5 /* MovieModel.swift */; };
 		003167032864A3F2002FCDE5 /* CollectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 003167022864A3F2002FCDE5 /* CollectionViewController.swift */; };
 		00458ED7286A36940033C112 /* NavController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00458ED6286A36940033C112 /* NavController.swift */; };
+		005F3E52286DD350004A3978 /* CacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 005F3E51286DD350004A3978 /* CacheManager.swift */; };
 		009BA05928637A70001DA9DD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 009BA05828637A70001DA9DD /* AppDelegate.swift */; };
 		009BA05B28637A70001DA9DD /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 009BA05A28637A70001DA9DD /* SceneDelegate.swift */; };
 		009BA05D28637A70001DA9DD /* SearchViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 009BA05C28637A70001DA9DD /* SearchViewController.swift */; };
@@ -23,6 +24,8 @@
 		009BA07328637B3E001DA9DD /* SearchViewProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 009BA07228637B3E001DA9DD /* SearchViewProtocol.swift */; };
 		009BA07528637BD1001DA9DD /* ModuleAssembler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 009BA07428637BD1001DA9DD /* ModuleAssembler.swift */; };
 		009BA07A2863806B001DA9DD /* SearchSubviewsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 009BA0792863806B001DA9DD /* SearchSubviewsModel.swift */; };
+		00A48564286B5C100060AB1E /* UIImageViewExt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00A48563286B5C100060AB1E /* UIImageViewExt.swift */; };
+		00A48566286B672D0060AB1E /* loading.gif in Resources */ = {isa = PBXBuildFile; fileRef = 00A48565286B672D0060AB1E /* loading.gif */; };
 		00C6A6E32864651000B77FCF /* NetworkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00C6A6E22864651000B77FCF /* NetworkManager.swift */; };
 		00DAF5B42864AB9F0081B5C2 /* CollectionPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00DAF5B32864AB9F0081B5C2 /* CollectionPresenter.swift */; };
 		00DAF5B62864ABD70081B5C2 /* CollectionPresenterProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00DAF5B52864ABD70081B5C2 /* CollectionPresenterProtocol.swift */; };
@@ -37,6 +40,7 @@
 		003166FF28648D7E002FCDE5 /* MovieModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MovieModel.swift; sourceTree = "<group>"; };
 		003167022864A3F2002FCDE5 /* CollectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionViewController.swift; sourceTree = "<group>"; };
 		00458ED6286A36940033C112 /* NavController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavController.swift; sourceTree = "<group>"; };
+		005F3E51286DD350004A3978 /* CacheManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheManager.swift; sourceTree = "<group>"; };
 		009BA05528637A70001DA9DD /* kinopoiskAPI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = kinopoiskAPI.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		009BA05828637A70001DA9DD /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		009BA05A28637A70001DA9DD /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -51,6 +55,8 @@
 		009BA07228637B3E001DA9DD /* SearchViewProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViewProtocol.swift; sourceTree = "<group>"; };
 		009BA07428637BD1001DA9DD /* ModuleAssembler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModuleAssembler.swift; sourceTree = "<group>"; };
 		009BA0792863806B001DA9DD /* SearchSubviewsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchSubviewsModel.swift; sourceTree = "<group>"; };
+		00A48563286B5C100060AB1E /* UIImageViewExt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIImageViewExt.swift; sourceTree = "<group>"; };
+		00A48565286B672D0060AB1E /* loading.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = loading.gif; sourceTree = "<group>"; };
 		00C6A6E22864651000B77FCF /* NetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkManager.swift; sourceTree = "<group>"; };
 		00DAF5B32864AB9F0081B5C2 /* CollectionPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionPresenter.swift; sourceTree = "<group>"; };
 		00DAF5B52864ABD70081B5C2 /* CollectionPresenterProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionPresenterProtocol.swift; sourceTree = "<group>"; };
@@ -102,7 +108,7 @@
 			children = (
 				009BA05828637A70001DA9DD /* AppDelegate.swift */,
 				009BA05A28637A70001DA9DD /* SceneDelegate.swift */,
-				00458ED6286A36940033C112 /* NavController.swift */,
+				00A48567286B6BD20060AB1E /* SupportFiles */,
 				003167012864A39F002FCDE5 /* Search */,
 				00DAF5B22864AB790081B5C2 /* Collection */,
 				009BA07828637FE2001DA9DD /* Services */,
@@ -140,6 +146,7 @@
 			children = (
 				009BA07428637BD1001DA9DD /* ModuleAssembler.swift */,
 				00C6A6E22864651000B77FCF /* NetworkManager.swift */,
+				005F3E51286DD350004A3978 /* CacheManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -151,6 +158,16 @@
 				003166FF28648D7E002FCDE5 /* MovieModel.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		00A48567286B6BD20060AB1E /* SupportFiles */ = {
+			isa = PBXGroup;
+			children = (
+				00458ED6286A36940033C112 /* NavController.swift */,
+				00A48563286B5C100060AB1E /* UIImageViewExt.swift */,
+				00A48565286B672D0060AB1E /* loading.gif */,
+			);
+			path = SupportFiles;
 			sourceTree = "<group>";
 		};
 		00DAF5B22864AB790081B5C2 /* Collection */ = {
@@ -250,6 +267,7 @@
 			files = (
 				0014D1C62867B57600AD5D39 /* Keys.plist in Resources */,
 				009BA06528637A70001DA9DD /* LaunchScreen.storyboard in Resources */,
+				00A48566286B672D0060AB1E /* loading.gif in Resources */,
 				009BA06228637A70001DA9DD /* Assets.xcassets in Resources */,
 				009BA06028637A70001DA9DD /* Main.storyboard in Resources */,
 			);
@@ -262,6 +280,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				00A48564286B5C100060AB1E /* UIImageViewExt.swift in Sources */,
 				00DAF5B62864ABD70081B5C2 /* CollectionPresenterProtocol.swift in Sources */,
 				00DAF5B82864AC110081B5C2 /* CollectionViewProtocol.swift in Sources */,
 				00DAF5BE2864BB220081B5C2 /* CustomCell.swift in Sources */,
@@ -274,6 +293,7 @@
 				009BA05D28637A70001DA9DD /* SearchViewController.swift in Sources */,
 				00C6A6E32864651000B77FCF /* NetworkManager.swift in Sources */,
 				009BA07128637AFD001DA9DD /* SearchPresenterProtocol.swift in Sources */,
+				005F3E52286DD350004A3978 /* CacheManager.swift in Sources */,
 				009BA05928637A70001DA9DD /* AppDelegate.swift in Sources */,
 				009BA07528637BD1001DA9DD /* ModuleAssembler.swift in Sources */,
 				009BA07328637B3E001DA9DD /* SearchViewProtocol.swift in Sources */,

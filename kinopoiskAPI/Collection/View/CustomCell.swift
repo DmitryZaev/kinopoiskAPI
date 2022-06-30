@@ -20,7 +20,8 @@ class CustomCell: UICollectionViewCell {
     private var openedState: Bool!
     var id: String!
     
-    private let imageView = UIImageView()
+    var imageView = UIImageView()
+    private var image: UIImage?
     private let nameLabel = UILabel()
     private let yearLabel = UILabel()
     private let kpRatingView = UIView()
@@ -33,6 +34,19 @@ class CustomCell: UICollectionViewCell {
                                   green: 205 / 255,
                                   blue: 170 / 255,
                                   alpha: 1)
+    private let lightBlueColor = UIColor(red: 0 / 255,
+                                  green: 128 / 255,
+                                  blue: 255 / 255,
+                                  alpha: 1)
+    
+    override func prepareForReuse() {
+        nameLabel.text = nil
+        imageView.image = nil
+        yearLabel.text = nil
+        kpRatingLabel.text = nil
+        imbdRatingLabel.text = nil
+        descriptionLabel.text = nil
+    }
     
     func configureCell(model: CellModel, indexPath: IndexPath) {
         
@@ -64,6 +78,7 @@ class CustomCell: UICollectionViewCell {
         imageView.layer.masksToBounds = true
         contentView.addSubview(imageView)
         imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.backgroundColor = .white
         
         NSLayoutConstraint.activate([
             imageView.topAnchor.constraint(equalTo: topAnchor, constant: 10),
@@ -71,6 +86,12 @@ class CustomCell: UICollectionViewCell {
             imageView.heightAnchor.constraint(equalTo: contentView.widthAnchor),
             imageView.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 2/3)
         ])
+        
+        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.5) {
+            if self.imageView.image == nil {
+                self.imageView.fromGif(resourceName: "loading")
+            }
+        }
     }
     
     private func addNameLabel(name: String) {
@@ -114,17 +135,10 @@ class CustomCell: UICollectionViewCell {
     }
     
     func addImage(from data: Data) {
-        let image = UIImage(data: data)
+        imageView.stopGif()
+        image = UIImage(data: data)
         imageView.image = image
-    }
-    
-    override func prepareForReuse() {
-        nameLabel.text = nil
-        imageView.image = nil
-        yearLabel.text = nil
-        kpRatingLabel.text = nil
-        imbdRatingLabel.text = nil
-        descriptionLabel.text = nil
+        imageView.contentMode = .scaleToFill
     }
     
     private func addRatingViews(rating: Rating, textLabel: UILabel, ratingNumbers: Double) {
@@ -183,7 +197,7 @@ class CustomCell: UICollectionViewCell {
     
     private func addDescriptionButton() {
         contentView.addSubview(descriptionButton)
-        descriptionButton.tintColor = .blue
+        descriptionButton.tintColor = lightBlueColor
         descriptionButton.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
@@ -236,5 +250,18 @@ class CustomCell: UICollectionViewCell {
         NotificationCenter.default.post(name: Notification.Name("Closing"),
                                         object: nil,
                                         userInfo: userInfo)
+    }
+    
+    func transformToLargeSize() {
+        UIView.animate(withDuration: 0.2) {
+            self.transform = CGAffineTransform(scaleX: 1.05,
+                                               y: 1.05)
+        }
+    }
+    
+    func transformToStandardSize() {
+        UIView.animate(withDuration: 0.2) {
+            self.transform = CGAffineTransform.identity
+        }
     }
 }

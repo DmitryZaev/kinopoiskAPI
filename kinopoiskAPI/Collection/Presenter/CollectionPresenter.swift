@@ -13,6 +13,7 @@ class CollectionPresenter: CollectionPresenterProtocol {
     var viewWidth: Double = 0
     var movies = [MovieModel]()
     var title = String()
+    var openSiteWithoutAlert: Bool? = false
     weak var collectionView: CollectionViewProtocol!
     var networkManager: NetManager!
     
@@ -81,5 +82,26 @@ class CollectionPresenter: CollectionPresenterProtocol {
     
     func openSite(for id: String) {
         networkManager.openInKinopoiskSite(with: id)
+    }
+    
+    func checkNeedAlertControllerOrOpenSite(for id: String) {
+        guard let openSiteWithoutAlert = openSiteWithoutAlert else { return }
+        if openSiteWithoutAlert {
+            openSite(for: id)
+        } else {
+            collectionView.openAlertController(with: id)
+        }
+    }
+    
+    func changeOpenSiteWithoutAlert(pressedYes: Bool) {
+        if pressedYes {
+            openSiteWithoutAlert = true
+        } else {
+            openSiteWithoutAlert = nil
+        }
+    }
+    
+    func cleanCache() {
+        CacheManager.cleanCache()
     }
 }

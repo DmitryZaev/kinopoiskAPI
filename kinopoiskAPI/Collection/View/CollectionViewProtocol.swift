@@ -14,4 +14,6 @@ protocol CollectionViewProtocol: AnyObject {
     func updateCollection()
     
     func addBackgroundLabel()
+    
+    func openAlertController(with id: String)
 }

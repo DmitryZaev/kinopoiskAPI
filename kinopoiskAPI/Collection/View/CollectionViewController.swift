@@ -17,6 +17,16 @@ class CollectionViewController: UICollectionViewController {
     var activityIndicator = UIActivityIndicatorView()
     var sortMenu = UIMenu()
     var plusHeightForOpenedCells = [IndexPath : Double]()
+    var centralCell: CustomCell?
+    var decreasingCell: CustomCell?
+    private let aquamarineColor = UIColor(red: 102 / 255,
+                                  green: 205 / 255,
+                                  blue: 170 / 255,
+                                  alpha: 1)
+    private let lightBlueColor = UIColor(red: 0 / 255,
+                                  green: 128 / 255,
+                                  blue: 255 / 255,
+                                  alpha: 1)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -30,7 +40,11 @@ class CollectionViewController: UICollectionViewController {
         
         self.collectionView!.register(CustomCell.self,
                                       forCellWithReuseIdentifier: reuseIdentifier)
-        
+
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super .viewWillAppear(animated)
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(notificationHandler(notification:)),
                                                name: Notification.Name("Opening"),
@@ -40,6 +54,11 @@ class CollectionViewController: UICollectionViewController {
                                                selector: #selector(notificationHandler(notification:)),
                                                name: Notification.Name("Closing"),
                                                object: nil)
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        NotificationCenter.default.removeObserver(self)
+        collectionPresenter.cleanCache()
     }
     
     @objc private func notificationHandler(notification: Notification) {
@@ -55,6 +74,13 @@ class CollectionViewController: UICollectionViewController {
         UIView.animate(withDuration: 0.2, delay: 0) {
             self.collectionView.reloadItems(at: [cellIndexPath])
         }
+        centralCell = nil
+    }
+    
+    override func viewDidLayoutSubviews() {
+        if !collectionView.isDecelerating {
+        resizeCellInCenter()
+        }
     }
     
     private func configureCollectionView() {
@@ -64,7 +90,8 @@ class CollectionViewController: UICollectionViewController {
         collectionView.dataSource = self
         title = collectionPresenter.getTitle()
         navigationController?.navigationBar.topItem?.title = ""
-        navigationController?.navigationBar.tintColor = .blue
+        navigationController?.navigationBar.tintColor = lightBlueColor
+        collectionView.decelerationRate = .normal
     }
     
     private func addSortButtonItem() {
@@ -121,11 +148,12 @@ class CollectionViewController: UICollectionViewController {
             })
         ])
     }
+
     
     private func addActivityIndicatorItem() {
         activityIndicator = UIActivityIndicatorView(style: .medium)
         activityIndicatorItem = UIBarButtonItem(customView: activityIndicator)
-        activityIndicator.color = .blue
+        activityIndicator.color = lightBlueColor
         activityIndicator.hidesWhenStopped = true
     }
     
@@ -145,7 +173,7 @@ class CollectionViewController: UICollectionViewController {
         let appearance = UINavigationBarAppearance()
         appearance.configureWithTransparentBackground()
         appearance.backgroundEffect = UIBlurEffect(style: .light)
-        appearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor : UIColor.blue,
+        appearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor : lightBlueColor,
                                           NSAttributedString.Key.font : UIFont(name: "Galvji",
                                                                                size: 15) as Any]
         appearance.setBackIndicatorImage(UIImage(systemName: "arrow.backward"),
@@ -160,10 +188,64 @@ class CollectionViewController: UICollectionViewController {
         let backgroundLabel = UILabel()
         backgroundLabel.text = "there is nothing like this \u{1F645}"
         backgroundLabel.font = UIFont(name: "Galvji", size: 25)
-        backgroundLabel.textColor = .blue
+        backgroundLabel.textColor = lightBlueColor
         backgroundLabel.textAlignment = .center
         backgroundLabel.sizeToFit()
         collectionView.backgroundView = backgroundLabel
+    }
+    
+    private func obtaintMovieId(cellIndexPath: IndexPath) -> String {
+        guard let cell = collectionView.cellForItem(at: cellIndexPath) as? CustomCell,
+              let id = cell.id
+        else { return "" }
+        return id
+    }
+    
+    //MARK: - Visible resizing cell in center
+    private func resizeCellInCenter() {
+        if centralCell == nil {
+            guard collectionView.visibleSize.width < collectionView.visibleSize.height else { return }
+            let centerPoint = CGPoint(x: collectionView.frame.size.width / 2 + collectionView.contentOffset.x,
+                                      y: collectionView.frame.size.height / 2 + collectionView.contentOffset.y)
+            
+            if let centralCellIndexPath = collectionView.indexPathForItem(at: centerPoint) {
+                centralCell = collectionView.cellForItem(at: centralCellIndexPath) as? CustomCell
+                centralCell?.transformToLargeSize()
+            }
+        } else {
+            let centerY = collectionView.frame.size.height / 2
+            let cellTopBorder = centralCell!.frame.origin.y - collectionView.contentOffset.y
+            let cellBottomBorder = cellTopBorder + centralCell!.frame.height
+            if !(cellTopBorder...cellBottomBorder).contains(centerY) {
+                centralCell?.transformToStandardSize()
+                centralCell = nil
+            }
+        }
+    }
+    
+    private func decreaseCell(cell: CustomCell) {
+        let centerY = collectionView.frame.size.height / 2
+        let cellTopBorder = cell.frame.origin.y - collectionView.contentOffset.y
+        let cellBottomBorder = cellTopBorder + cell.frame.height
+        
+        if !(cellTopBorder...cellBottomBorder).contains(centerY) {
+            cell.transformToStandardSize()
+        }
+    }
+    
+    //MARK: UIScrollViewDelegate
+    override func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
+        if centralCell != nil {
+        	decreasingCell = centralCell
+        }
+        centralCell = nil
+    }
+    
+    override func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        resizeCellInCenter()
+        
+        guard let decreasingCell = decreasingCell else { return }
+        decreaseCell(cell: decreasingCell)
     }
     
     //MARK: - UICollectionViewDataSource
@@ -184,7 +266,7 @@ class CollectionViewController: UICollectionViewController {
     
     //MARK: - UICollectionViewDelegate
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-        return UIEdgeInsets(top: 10,
+        return UIEdgeInsets(top: 20,
                             left: 10,
                             bottom: 30,
                             right: 10)
@@ -195,10 +277,7 @@ class CollectionViewController: UICollectionViewController {
     }
     
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard let cell = collectionView.cellForItem(at: indexPath) as? CustomCell,
-              let id = cell.id
-        else { return }
-        collectionPresenter.openSite(for: id)
+        collectionPresenter.checkNeedAlertControllerOrOpenSite(for: obtaintMovieId(cellIndexPath: indexPath))
     }
 }
 
@@ -215,6 +294,7 @@ extension CollectionViewController: UICollectionViewDelegateFlowLayout {
     }
 }
 
+
 //MARK:  - CollectionViewProtocol implementation
 extension CollectionViewController: CollectionViewProtocol {
     
@@ -228,7 +308,7 @@ extension CollectionViewController: CollectionViewProtocol {
     func updateCollection() {
         DispatchQueue.main.async {
             self.collectionView.reloadData()
-            var offsetY = -90
+            var offsetY = -100
             if UIDevice.current.orientation.isLandscape {
                 offsetY = -30
             }
@@ -238,6 +318,70 @@ extension CollectionViewController: CollectionViewProtocol {
             self.activityIndicatorChangeState()
         }
     }
+    
+    func openAlertController(with id: String) {
+        let choiceSwitch = UISwitch()
+        choiceSwitch.isOn = false
+        choiceSwitch.onTintColor = aquamarineColor
+        
+        let choiceTextLabel = UILabel()
+        choiceTextLabel.text = "remember my choice"
+        choiceTextLabel.font = UIFont(name: "Galvji", size: 15)
+        choiceTextLabel.textColor = lightBlueColor
+        choiceTextLabel.sizeToFit()
+        
+
+        let alertController = UIAlertController(title: nil,
+                                                message: nil,
+                                                preferredStyle: .alert)
+        let title = NSAttributedString(string: "Open in Safari?\n",
+                                       attributes: [.foregroundColor : lightBlueColor,
+                                                    .font : UIFont(name: "Galvji", size: 25)!])
+        alertController.setValue(title, forKey: "attributedTitle")
+        
+        let choiceView = UIView()
+        choiceView.layer.borderWidth = 0.5
+        choiceView.layer.borderColor = lightBlueColor.cgColor
+        choiceView.layer.cornerRadius = choiceSwitch.frame.height / 2
+        choiceView.layer.masksToBounds = true
+        choiceView.addSubview(choiceSwitch)
+        choiceView.addSubview(choiceTextLabel)
+        alertController.view.addSubview(choiceView)
+        
+        choiceTextLabel.translatesAutoresizingMaskIntoConstraints = false
+        choiceSwitch.translatesAutoresizingMaskIntoConstraints = false
+        choiceView.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            choiceView.heightAnchor.constraint(equalToConstant: choiceSwitch.frame.height),
+            choiceView.widthAnchor.constraint(equalToConstant: choiceSwitch.frame.width + choiceTextLabel.frame.width + 20),
+            choiceView.centerXAnchor.constraint(equalTo: alertController.view.centerXAnchor),
+            choiceView.bottomAnchor.constraint(equalTo: alertController.view.bottomAnchor, constant: -50),
+            
+            choiceSwitch.centerYAnchor.constraint(equalTo: choiceView.centerYAnchor),
+            choiceSwitch.leftAnchor.constraint(equalTo: choiceView.leftAnchor),
+            
+            choiceTextLabel.centerYAnchor.constraint(equalTo: choiceView.centerYAnchor),
+            choiceTextLabel.rightAnchor.constraint(equalTo: choiceView.rightAnchor, constant: -10)
+        ])
+        
+        
+        let canselAction = UIAlertAction(title: "No", style: .destructive) { _ in
+            if choiceSwitch.isOn {
+                self.collectionPresenter.changeOpenSiteWithoutAlert(pressedYes: false)
+            }
+        }
+        let openAction = UIAlertAction(title: "Yes", style: .default) { _ in
+            self.collectionPresenter.openSite(for: id)
+            if choiceSwitch.isOn {
+                self.collectionPresenter.changeOpenSiteWithoutAlert(pressedYes: true)
+            }
+        }
+        alertController.addAction(canselAction)
+        alertController.addAction(openAction)
+        present(alertController, animated: true)
+    }
 }
+
 
 

@@ -64,7 +64,6 @@ class NetworkManager: NetManager {
                 guard let codedMovie = movie.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else { return url }
                 urlString = "https://api.kinopoisk.dev/movie?field=name&search=\(codedMovie)&limit=500&isStrict=false&token=\(token)"
                 url = URL(string: urlString)
-                print(urlString)
             }
         }
         return url
@@ -95,17 +94,22 @@ class NetworkManager: NetManager {
     }
     
     func getImageData(from link: String, completion: @escaping (Data) -> Void) {
-    
-        guard let url = URL(string: link) else { return }
-        let session = URLSession.shared
-        session.dataTask(with: url) { data, response, error in
-            if let error = error {
-                print(error.localizedDescription)
-            }
-            
-            guard let data = data else { return }
-            completion(data)
-        }.resume()
+        
+        if let imageData = CacheManager.getImageFromCache(for: link) {
+            completion(imageData)
+        } else {
+            guard let url = URL(string: link) else { return }
+            let session = URLSession.shared
+            session.dataTask(with: url) { data, response, error in
+                if let error = error {
+                    print(error.localizedDescription)
+                }
+                
+                guard let data = data else { return }
+                completion(data)
+                CacheManager.putImageToCache(imageData: data, for: link)
+            }.resume()
+        }
     }
     
     func openInKinopoiskSite(with id: String) {

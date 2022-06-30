@@ -37,6 +37,11 @@ class SearchViewController: UIViewController {
         navigationController?.navigationBar.compactAppearance = appearance
         navigationController?.navigationBar.standardAppearance = appearance
     }
+    
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        searchView.checkNeedMoveSearchTextField(newViewSize: size)
+    }
 }
 
 extension SearchViewController: SearchVCProtocol {

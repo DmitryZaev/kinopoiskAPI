@@ -27,4 +27,10 @@ protocol CollectionPresenterProtocol: AnyObject {
     func checkNeedBackgroundLabel()
     
     func openSite(for id: String)
+    
+    func checkNeedAlertControllerOrOpenSite(for id: String)
+    
+    func changeOpenSiteWithoutAlert(pressedYes: Bool)
+    
+    func cleanCache()
 }

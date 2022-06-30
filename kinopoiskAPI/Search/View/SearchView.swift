@@ -11,7 +11,7 @@ import UIKit
 class SearchView: UIView {
     
     var presenter: SearchPresenterProtocol!
-    private var searchTextField = UITextField()
+    var searchTextField = UITextField()
     private var activityIndicator = UIActivityIndicatorView()
     private var networkManager: NetManager!
     private var textFieldWidthAnchor: NSLayoutConstraint?
@@ -20,6 +20,10 @@ class SearchView: UIView {
     private var foldedHeightAnchor: NSLayoutConstraint?
     private var centerYTextFieldAnchor: NSLayoutConstraint?
     private var liftedCenterYTextFieldAnchor: NSLayoutConstraint?
+    private let lightBlueColor = UIColor(red: 0 / 255,
+                                  green: 128 / 255,
+                                  blue: 255 / 255,
+                                  alpha: 1)
     
     override init(frame: CGRect) {
         super .init(frame: frame)
@@ -53,8 +57,9 @@ extension SearchView: SearchViewProtocol {
         liftedCenterYTextFieldAnchor = searchTextField.centerYAnchor.constraint(equalTo: centerYAnchor, constant: -50)
         
         searchTextField.backgroundColor = .orange
+        searchTextField.textColor = .black
         searchTextField.textAlignment = .center
-        searchTextField.font = .boldSystemFont(ofSize: 20)
+        searchTextField.font = UIFont(name: "Galvji Bold", size: 20)
         searchTextField.returnKeyType = .search
         searchTextField.autocorrectionType = .no
         searchTextField.layer.cornerRadius = model.height / 3
@@ -84,14 +89,14 @@ extension SearchView: SearchViewProtocol {
         centeredParagraphStyle.alignment = .center
         searchTextField.attributedPlaceholder = NSAttributedString(string: "Enter movie name or part of it",
                                                                    attributes: [.foregroundColor : UIColor.gray,
-                                                                                .font : UIFont.boldSystemFont(ofSize: 20),
+                                                                                .font : UIFont(name: "Galvji Bold", size: 20)!,
                                                                                 .paragraphStyle: centeredParagraphStyle])
     }
     
     func createActivityIndicator() {
         activityIndicator = UIActivityIndicatorView(style: .large)
         activityIndicator.center = center
-        activityIndicator.color = .blue
+        activityIndicator.color = lightBlueColor
         addSubview(activityIndicator)
         activityIndicator.hidesWhenStopped = true
     }
@@ -108,6 +113,7 @@ extension SearchView: SearchViewProtocol {
 extension SearchView: UITextFieldDelegate {
     func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
         textField.placeholder = String()
+        
         
         if UIDevice.current.orientation.isLandscape {
             centerYTextFieldAnchor?.isActive = false
@@ -138,15 +144,31 @@ extension SearchView: UITextFieldDelegate {
             self.activityIndicator.startAnimating()
             self.presenter.find(movie: movieName)
             
-            guard let liftedAnchor = self.liftedCenterYTextFieldAnchor,
-                  liftedAnchor.isActive
-            else { return }
+            guard let liftedAnchor = self.liftedCenterYTextFieldAnchor else { return }
             liftedAnchor.isActive = false
             self.centerYTextFieldAnchor?.isActive = true
             self.layoutIfNeeded()
         }
         searchTextField.resignFirstResponder()
         return true
+    }
+    
+    func checkNeedMoveSearchTextField(newViewSize: CGSize) {
+        if searchTextField.isFirstResponder {
+            searchTextField.resignFirstResponder()
+            if newViewSize.width > frame.width {
+                centerYTextFieldAnchor?.isActive = false
+                liftedCenterYTextFieldAnchor?.isActive = true
+            } else {
+                liftedCenterYTextFieldAnchor?.isActive = false
+                centerYTextFieldAnchor?.isActive = true
+            }
+            UIView.animate(withDuration: 0.3) {
+                self.layoutIfNeeded()
+            } completion: { _ in
+                self.searchTextField.becomeFirstResponder()
+            }
+        }
     }
 }
 
