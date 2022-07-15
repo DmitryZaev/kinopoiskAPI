@@ -11,7 +11,7 @@ private let reuseIdentifier = "Cell"
 
 class CollectionViewController: UICollectionViewController {
     
-    var collectionPresenter: CollectionPresenterProtocol!
+    var collectionViewModel: CollectionViewModelDelegate!
     var sortButtonItem = UIBarButtonItem()
     var activityIndicatorItem = UIBarButtonItem()
     var activityIndicator = UIActivityIndicatorView()
@@ -36,11 +36,6 @@ class CollectionViewController: UICollectionViewController {
         addActivityIndicatorItem()
         addSortButtonItem()
         configureRightBarButtonItems()
-        collectionPresenter.checkNeedBackgroundLabel()
-        
-        self.collectionView!.register(CustomCell.self,
-                                      forCellWithReuseIdentifier: reuseIdentifier)
-
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -58,7 +53,7 @@ class CollectionViewController: UICollectionViewController {
     
     override func viewWillDisappear(_ animated: Bool) {
         NotificationCenter.default.removeObserver(self)
-        collectionPresenter.cleanCache()
+        collectionViewModel.cleanCache()
     }
     
     @objc private func notificationHandler(notification: Notification) {
@@ -84,14 +79,25 @@ class CollectionViewController: UICollectionViewController {
     }
     
     private func configureCollectionView() {
+        self.collectionView!.register(CustomCell.self,
+                                      forCellWithReuseIdentifier: reuseIdentifier)
+        
         collectionView.backgroundColor = .yellow
         createAppearance()
         collectionView.delegate = self
         collectionView.dataSource = self
-        title = collectionPresenter.getTitle()
         navigationController?.navigationBar.topItem?.title = ""
         navigationController?.navigationBar.tintColor = lightBlueColor
         collectionView.decelerationRate = .normal
+        collectionViewModel.title.bind { [weak self] newTitle in
+            self?.title = "Search: \"\(newTitle)\""
+        }
+        
+        collectionViewModel.checkNeedBackgroundLabel { [weak self] need in
+            if need {
+                self?.addBackgroundLabel()
+            }
+        }
     }
     
     private func addSortButtonItem() {
@@ -109,47 +115,62 @@ class CollectionViewController: UICollectionViewController {
             UIAction(title: "name" + upSymbol, image: nil, handler: { _ in
                 self.activityIndicatorChangeState()
                 self.plusHeightForOpenedCells.removeAll()
-                self.collectionPresenter.update(sortedBy: "name", ascendingSort: true)
+                self.collectionViewModel.update(sortedBy: "name", ascendingSort: true) {
+                    self.updateCollection()
+                }
             }),
             UIAction(title: "name" + downSymbol, image: nil, handler: { _ in
                 self.activityIndicatorChangeState()
                 self.plusHeightForOpenedCells.removeAll()
-                self.collectionPresenter.update(sortedBy: "name", ascendingSort: false)
+                self.collectionViewModel.update(sortedBy: "name", ascendingSort: false) {
+                    self.updateCollection()
+                }
             }),
             UIAction(title: "year" + upSymbol, image: nil, handler: { _ in
                 self.activityIndicatorChangeState()
                 self.plusHeightForOpenedCells.removeAll()
-                self.collectionPresenter.update(sortedBy: "year", ascendingSort: true)
+                self.collectionViewModel.update(sortedBy: "year", ascendingSort: true) {
+                    self.updateCollection()
+                }
             }),
             UIAction(title: "year" + downSymbol, image: nil, handler: { _ in
                 self.activityIndicatorChangeState()
                 self.plusHeightForOpenedCells.removeAll()
-                self.collectionPresenter.update(sortedBy: "year", ascendingSort: false)
+                self.collectionViewModel.update(sortedBy: "year", ascendingSort: false) {
+                    self.updateCollection()
+                }
             }),
             UIAction(title: "kinopoisk rating" + upSymbol, image: nil, handler: { _ in
                 self.activityIndicatorChangeState()
                 self.plusHeightForOpenedCells.removeAll()
-                self.collectionPresenter.update(sortedBy: "rating.kp", ascendingSort: true)
+                self.collectionViewModel.update(sortedBy: "rating.kp", ascendingSort: true) {
+                    self.updateCollection()
+                }
             }),
             UIAction(title: "kinopoisk rating" + downSymbol, image: nil, handler: { _ in
                 self.activityIndicatorChangeState()
                 self.plusHeightForOpenedCells.removeAll()
-                self.collectionPresenter.update(sortedBy: "rating.kp", ascendingSort: false)
+                self.collectionViewModel.update(sortedBy: "rating.kp", ascendingSort: false) {
+                    self.updateCollection()
+                }
             }),
             UIAction(title: "imdb rating" + upSymbol, image: nil, handler: { _ in
                 self.activityIndicatorChangeState()
                 self.plusHeightForOpenedCells.removeAll()
-                self.collectionPresenter.update(sortedBy: "rating.imdb", ascendingSort: true)
+                self.collectionViewModel.update(sortedBy: "rating.imdb", ascendingSort: true) {
+                    self.updateCollection()
+                }
             }),
             UIAction(title: "imdb rating" + downSymbol, image: nil, handler: { _ in
                 self.activityIndicatorChangeState()
                 self.plusHeightForOpenedCells.removeAll()
-                self.collectionPresenter.update(sortedBy: "rating.imdb", ascendingSort: false)
+                self.collectionViewModel.update(sortedBy: "rating.imdb", ascendingSort: false) {
+                    self.updateCollection()
+                }
             })
         ])
     }
 
-    
     private func addActivityIndicatorItem() {
         activityIndicator = UIActivityIndicatorView(style: .medium)
         activityIndicatorItem = UIBarButtonItem(customView: activityIndicator)
@@ -184,7 +205,7 @@ class CollectionViewController: UICollectionViewController {
         navigationController?.navigationBar.standardAppearance = appearance
     }
     
-    func addBackgroundLabel() {
+    private func addBackgroundLabel() {
         let backgroundLabel = UILabel()
         backgroundLabel.text = "there is nothing like this \u{1F645}"
         backgroundLabel.font = UIFont(name: "Galvji", size: 25)
@@ -194,118 +215,7 @@ class CollectionViewController: UICollectionViewController {
         collectionView.backgroundView = backgroundLabel
     }
     
-    private func obtaintMovieId(cellIndexPath: IndexPath) -> String {
-        guard let cell = collectionView.cellForItem(at: cellIndexPath) as? CustomCell,
-              let id = cell.id
-        else { return "" }
-        return id
-    }
-    
-    //MARK: - Visible resizing cell in center
-    private func resizeCellInCenter() {
-        if centralCell == nil {
-            guard collectionView.visibleSize.width < collectionView.visibleSize.height else { return }
-            let centerPoint = CGPoint(x: collectionView.frame.size.width / 2 + collectionView.contentOffset.x,
-                                      y: collectionView.frame.size.height / 2 + collectionView.contentOffset.y)
-            
-            if let centralCellIndexPath = collectionView.indexPathForItem(at: centerPoint) {
-                centralCell = collectionView.cellForItem(at: centralCellIndexPath) as? CustomCell
-                centralCell?.transformToLargeSize()
-            }
-        } else {
-            let centerY = collectionView.frame.size.height / 2
-            let cellTopBorder = centralCell!.frame.origin.y - collectionView.contentOffset.y
-            let cellBottomBorder = cellTopBorder + centralCell!.frame.height
-            if !(cellTopBorder...cellBottomBorder).contains(centerY) {
-                centralCell?.transformToStandardSize()
-                centralCell = nil
-            }
-        }
-    }
-    
-    private func decreaseCell(cell: CustomCell) {
-        let centerY = collectionView.frame.size.height / 2
-        let cellTopBorder = cell.frame.origin.y - collectionView.contentOffset.y
-        let cellBottomBorder = cellTopBorder + cell.frame.height
-        
-        if !(cellTopBorder...cellBottomBorder).contains(centerY) {
-            cell.transformToStandardSize()
-        }
-    }
-    
-    //MARK: UIScrollViewDelegate
-    override func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
-        if centralCell != nil {
-        	decreasingCell = centralCell
-        }
-        centralCell = nil
-    }
-    
-    override func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-        resizeCellInCenter()
-        
-        guard let decreasingCell = decreasingCell else { return }
-        decreaseCell(cell: decreasingCell)
-    }
-    
-    //MARK: - UICollectionViewDataSource
-    override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        collectionPresenter.getNumberOfItems()
-    }
-    
-    override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as? CustomCell
-
-        let cellOpenedState: Bool = (plusHeightForOpenedCells[indexPath] != nil)
-        cell?.configureCell(model: collectionPresenter.getCellModel(for: indexPath.item,
-                                                                    indexPath: indexPath,
-                                                                    opened: cellOpenedState),
-                            indexPath: indexPath)
-        return cell ?? UICollectionViewCell()
-    }
-    
-    //MARK: - UICollectionViewDelegate
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-        return UIEdgeInsets(top: 20,
-                            left: 10,
-                            bottom: 30,
-                            right: 10)
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-        40
-    }
-    
-    override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        collectionPresenter.checkNeedAlertControllerOrOpenSite(for: obtaintMovieId(cellIndexPath: indexPath))
-    }
-}
-
-//MARK: - UICollectionViewDelegateFlowLayout
-extension CollectionViewController: UICollectionViewDelegateFlowLayout {
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        var size = collectionPresenter.getSizeForItem()
-        if plusHeightForOpenedCells[indexPath] != nil {
-            size.1 += plusHeightForOpenedCells[indexPath]!
-        }
-        return CGSize(width: size.0,
-                      height: size.1)
-    }
-}
-
-
-//MARK:  - CollectionViewProtocol implementation
-extension CollectionViewController: CollectionViewProtocol {
-    
-    func addImageToCell(with indexPath: IndexPath, data: Data) {
-        DispatchQueue.main.async {
-            guard let cell = self.collectionView.cellForItem(at: indexPath) as? CustomCell else { return }
-            cell.addImage(from: data)
-        }
-    }
-    
-    func updateCollection() {
+    private func updateCollection() {
         DispatchQueue.main.async {
             self.collectionView.reloadData()
             var offsetY = -100
@@ -319,7 +229,7 @@ extension CollectionViewController: CollectionViewProtocol {
         }
     }
     
-    func openAlertController(with id: String) {
+    private func openAlertController(with id: String) {
         let choiceSwitch = UISwitch()
         choiceSwitch.isOn = false
         choiceSwitch.onTintColor = aquamarineColor
@@ -366,20 +276,127 @@ extension CollectionViewController: CollectionViewProtocol {
         ])
         
         
-        let canselAction = UIAlertAction(title: "No", style: .destructive) { _ in
+        let canselAction = UIAlertAction(title: "No", style: .destructive) { [weak self] _ in
             if choiceSwitch.isOn {
-                self.collectionPresenter.changeOpenSiteWithoutAlert(pressedYes: false)
+                self?.collectionViewModel.changeOpenSiteWithoutAlert(pressedYes: false)
             }
         }
-        let openAction = UIAlertAction(title: "Yes", style: .default) { _ in
-            self.collectionPresenter.openSite(for: id)
+        let openAction = UIAlertAction(title: "Yes", style: .default) { [weak self] _ in
+            self?.collectionViewModel.openSite(for: id)
             if choiceSwitch.isOn {
-                self.collectionPresenter.changeOpenSiteWithoutAlert(pressedYes: true)
+                self?.collectionViewModel.changeOpenSiteWithoutAlert(pressedYes: true)
             }
         }
         alertController.addAction(canselAction)
         alertController.addAction(openAction)
         present(alertController, animated: true)
+    }
+
+    
+    private func obtaintMovieId(cellIndexPath: IndexPath) -> String {
+        guard let cell = collectionView.cellForItem(at: cellIndexPath) as? CustomCell,
+              let id = cell.id
+        else { return "" }
+        return id
+    }
+    
+//MARK: - Visible resizing cell in center
+    private func resizeCellInCenter() {
+        if centralCell == nil {
+            guard collectionView.visibleSize.width < collectionView.visibleSize.height else { return }
+            let centerPoint = CGPoint(x: collectionView.frame.size.width / 2 + collectionView.contentOffset.x,
+                                      y: collectionView.frame.size.height / 2 + collectionView.contentOffset.y)
+            
+            if let centralCellIndexPath = collectionView.indexPathForItem(at: centerPoint) {
+                centralCell = collectionView.cellForItem(at: centralCellIndexPath) as? CustomCell
+                centralCell?.transformToLargeSize()
+            }
+        } else {
+            let centerY = collectionView.frame.size.height / 2
+            let cellTopBorder = centralCell!.frame.origin.y - collectionView.contentOffset.y
+            let cellBottomBorder = cellTopBorder + centralCell!.frame.height
+            if !(cellTopBorder...cellBottomBorder).contains(centerY) {
+                centralCell?.transformToStandardSize()
+                centralCell = nil
+            }
+        }
+    }
+    
+    private func decreaseCell(cell: CustomCell) {
+        let centerY = collectionView.frame.size.height / 2
+        let cellTopBorder = cell.frame.origin.y - collectionView.contentOffset.y
+        let cellBottomBorder = cellTopBorder + cell.frame.height
+        
+        if !(cellTopBorder...cellBottomBorder).contains(centerY) {
+            cell.transformToStandardSize()
+        }
+    }
+    
+//MARK: - UIScrollViewDelegate
+    override func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
+        if centralCell != nil {
+        	decreasingCell = centralCell
+        }
+        centralCell = nil
+    }
+    
+    override func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        resizeCellInCenter()
+        
+        guard let decreasingCell = decreasingCell else { return }
+        decreaseCell(cell: decreasingCell)
+    }
+    
+//MARK: - UICollectionViewDataSource
+    override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        collectionViewModel.movies.value.count
+    }
+    
+    override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as? CustomCell
+
+        let cellOpenedState: Bool = (plusHeightForOpenedCells[indexPath] != nil)
+        
+        collectionViewModel.getCellModel(for: indexPath.item, opened: cellOpenedState) { [weak self] cellModel in
+            cell?.configureCell(model: cellModel, indexPath: indexPath)
+            self?.collectionViewModel.getImageForCell(index: indexPath.item) { data in
+                cell?.addImage(from: data)
+            }
+        }
+        
+        return cell ?? UICollectionViewCell()
+    }
+    
+//MARK: - UICollectionViewDelegate
+    override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let movieId = obtaintMovieId(cellIndexPath: indexPath)
+        collectionViewModel.checkNeedAlertControllerOrOpenSite(for: movieId) { [weak self] in
+            self?.openAlertController(with: movieId)
+        }
+    }
+}
+
+//MARK: - UICollectionViewDelegateFlowLayout
+extension CollectionViewController: UICollectionViewDelegateFlowLayout {
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        var size = collectionViewModel.getSizeForItem()
+        if plusHeightForOpenedCells[indexPath] != nil {
+            size.1 += plusHeightForOpenedCells[indexPath]!
+        }
+        return CGSize(width: size.0,
+                      height: size.1)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+        return UIEdgeInsets(top: 20,
+                            left: 10,
+                            bottom: 30,
+                            right: 10)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
+        40
     }
 }
 

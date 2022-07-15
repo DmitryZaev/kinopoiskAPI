@@ -10,6 +10,7 @@ import UIKit
 class SearchViewController: UIViewController {
     
     private let searchView = SearchView()
+    private var viewSize: CGSize!
     
     override func loadView() {
         view = searchView
@@ -18,15 +19,34 @@ class SearchViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         DispatchQueue.main.async {
-            self.searchView.presenter.configureSearchVeiw()
+            self.configureView()
         }
+    }
+    
+    private func configureView() {
+        searchView.searchViewModel.createSearchTextFieldModel(viewWidth: searchView.bounds.width,
+                                                              viewHeight: searchView.bounds.height)
+        
+        searchView.searchViewModel.searchTextFieldModel?.bind { [weak self] model in
+            self?.searchView.createSearchTextField(width: model.width,
+                                                   height: model.height)
+        }
+        searchView.createActivityIndicator()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        createAppearance()
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
         searchView.returnTextField()
-        createAppearance()
+    }
+    
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        searchView.checkNeedMoveSearchTextField(newViewSize: size)
     }
     
     private func createAppearance() {
@@ -37,14 +57,9 @@ class SearchViewController: UIViewController {
         navigationController?.navigationBar.compactAppearance = appearance
         navigationController?.navigationBar.standardAppearance = appearance
     }
-    
-    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
-        super.viewWillTransition(to: size, with: coordinator)
-        searchView.checkNeedMoveSearchTextField(newViewSize: size)
-    }
 }
 
-extension SearchViewController: SearchVCProtocol {
+extension SearchViewController: SearchVCDelegate {
     
     func goToCollection() {
         let configuredCollectionVC = ModuleAssembler.configureCollectionVC()

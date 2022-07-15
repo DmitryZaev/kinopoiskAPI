@@ -10,7 +10,6 @@ import Foundation
 struct CellModel {
     let name: String
     let year: String
-    let picture: Data
     let kpRating: Double
     let imdbRating: Double
     let description: String

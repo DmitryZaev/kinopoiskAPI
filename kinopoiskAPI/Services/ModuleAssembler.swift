@@ -10,31 +10,29 @@ import UIKit
 
 class ModuleAssembler {
     
-    static let collectionPresenter = CollectionPresenter()
+    static let collectionViewModel = CollectionViewModel()
     
     static func configureSearchVC() -> UIViewController {
         
         let vc = SearchViewController()
-        let presenter = SearchPresenter()
+        let searhViewModel = SearchViewModel()
         let networkManager = NetworkManager()
         
-        presenter.collectionPresenter = collectionPresenter
-        presenter.searchVC = vc
-        presenter.networkManager = networkManager
+        searhViewModel.collectionViewModel = collectionViewModel
+        searhViewModel.networkManager = networkManager
         
         guard let searchView = vc.view as? SearchView else { return vc }
-        searchView.presenter = presenter
-        presenter.searchView = searchView
+        searchView.searchViewModel = searhViewModel
+        searchView.viewController = vc
         
         return vc
     }
     
     static func configureCollectionVC() -> UICollectionViewController {
         let networkManager = NetworkManager()
-        collectionPresenter.networkManager = networkManager
-        let collectionVC = CollectionViewController(collectionViewLayout: UICollectionViewFlowLayout.init())
-        collectionPresenter.collectionView = collectionVC
-        collectionVC.collectionPresenter = collectionPresenter
+        collectionViewModel.networkManager = networkManager
+        let collectionVC = CollectionViewController(collectionViewLayout: UICollectionViewFlowLayout())
+        collectionVC.collectionViewModel = collectionViewModel
         
         return collectionVC
     }

@@ -10,7 +10,8 @@ import UIKit
 
 class SearchView: UIView {
     
-    var presenter: SearchPresenterProtocol!
+    var searchViewModel: SearchViewModelDelegate!
+    weak var viewController: SearchVCDelegate!
     var searchTextField = UITextField()
     private var activityIndicator = UIActivityIndicatorView()
     private var networkManager: NetManager!
@@ -34,18 +35,13 @@ class SearchView: UIView {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-}
-
-
-//MARK: - SearchViewProtocol implementation
-extension SearchView: SearchViewProtocol {
     
-    func createSearchTextField(with model: SearchSubviewsModel) {
+    func createSearchTextField(width: Double, height: Double) {
         addSubview(searchTextField)
         searchTextField.translatesAutoresizingMaskIntoConstraints = false
         
-        textFieldWidthAnchor = searchTextField.widthAnchor.constraint(equalToConstant: model.width)
-        textFieldHeightAnchor = searchTextField.heightAnchor.constraint(equalToConstant: model.height)
+        textFieldWidthAnchor = searchTextField.widthAnchor.constraint(equalToConstant: width)
+        textFieldHeightAnchor = searchTextField.heightAnchor.constraint(equalToConstant: height)
         centerYTextFieldAnchor = searchTextField.centerYAnchor.constraint(equalTo: centerYAnchor)
         searchTextField.centerXAnchor.constraint(equalTo: centerXAnchor).isActive = true
         textFieldWidthAnchor?.isActive = true
@@ -62,7 +58,7 @@ extension SearchView: SearchViewProtocol {
         searchTextField.font = UIFont(name: "Galvji Bold", size: 20)
         searchTextField.returnKeyType = .search
         searchTextField.autocorrectionType = .no
-        searchTextField.layer.cornerRadius = model.height / 3
+        searchTextField.layer.cornerRadius = height / 3
         searchTextField.layer.masksToBounds = true
         searchTextField.delegate = self
         configureAndAddPlaceholder()
@@ -95,25 +91,22 @@ extension SearchView: SearchViewProtocol {
     
     func createActivityIndicator() {
         activityIndicator = UIActivityIndicatorView(style: .large)
-        activityIndicator.center = center
         activityIndicator.color = lightBlueColor
-        addSubview(activityIndicator)
         activityIndicator.hidesWhenStopped = true
-    }
-    
-    func stopActivityIndicator() {
-        DispatchQueue.main.async {
-            self.activityIndicator.stopAnimating()
-        }
+        addSubview(activityIndicator)
+        
+        activityIndicator.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            activityIndicator.centerYAnchor.constraint(equalTo: centerYAnchor),
+            activityIndicator.centerXAnchor.constraint(equalTo: centerXAnchor)
+        ])
     }
 }
-
 
 //MARK: - UITextFieldDelegate
 extension SearchView: UITextFieldDelegate {
     func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
         textField.placeholder = String()
-        
         
         if UIDevice.current.orientation.isLandscape {
             centerYTextFieldAnchor?.isActive = false
@@ -142,7 +135,10 @@ extension SearchView: UITextFieldDelegate {
             self.layoutIfNeeded()
         } completion: { _ in
             self.activityIndicator.startAnimating()
-            self.presenter.find(movie: movieName)
+            self.searchViewModel.find(movie: movieName) { [weak self] in
+                self?.activityIndicator.stopAnimating()
+                self?.viewController.goToCollection()
+            }
             
             guard let liftedAnchor = self.liftedCenterYTextFieldAnchor else { return }
             liftedAnchor.isActive = false

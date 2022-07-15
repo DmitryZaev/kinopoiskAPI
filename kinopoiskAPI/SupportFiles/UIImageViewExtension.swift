@@ -1,5 +1,5 @@
 //
-//  UIImageViewExt.swift
+//  UIImageViewExtension.swift
 //  kinopoiskAPI
 //
 //  Created by Dmitry Victorovich on 28.06.2022.
