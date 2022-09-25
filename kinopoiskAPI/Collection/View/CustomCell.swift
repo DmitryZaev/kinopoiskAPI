@@ -17,7 +17,7 @@ class CustomCell: UICollectionViewCell {
     
     private var myIndexPath: IndexPath!
     private var myDecriptionHeight: CGFloat!
-    private var openedState: Bool!
+    var openedState: Bool!
     var id: String!
     
     var imageView = UIImageView()
@@ -262,6 +262,16 @@ class CustomCell: UICollectionViewCell {
     func transformToStandardSize() {
         UIView.animate(withDuration: 0.2) {
             self.transform = CGAffineTransform.identity
+        }
+    }
+    
+    func changeDescriptionButtonState(opened: Bool) {
+        if opened {
+            descriptionButton.setImage(UIImage(systemName: "chevron.up.circle"), for: .normal)
+            descriptionButton.addTarget(self, action: #selector(closeDescription), for: .touchUpInside)
+        } else {
+            descriptionButton.setImage(UIImage(systemName: "chevron.down.circle"), for: .normal)
+            descriptionButton.addTarget(self, action: #selector(openDescription), for: .touchUpInside)
         }
     }
 }

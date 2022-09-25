@@ -18,12 +18,9 @@ class ModuleAssembler {
         let searhViewModel = SearchViewModel()
         let networkManager = NetworkManager()
         
+        vc.searchViewModel = searhViewModel
         searhViewModel.collectionViewModel = collectionViewModel
         searhViewModel.networkManager = networkManager
-        
-        guard let searchView = vc.view as? SearchView else { return vc }
-        searchView.searchViewModel = searhViewModel
-        searchView.viewController = vc
         
         return vc
     }

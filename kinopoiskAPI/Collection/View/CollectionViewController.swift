@@ -11,7 +11,7 @@ private let reuseIdentifier = "Cell"
 
 class CollectionViewController: UICollectionViewController {
     
-    var collectionViewModel: CollectionViewModelDelegate!
+    var collectionViewModel: CollectionViewModelProtocol!
     var sortButtonItem = UIBarButtonItem()
     var activityIndicatorItem = UIBarButtonItem()
     var activityIndicator = UIActivityIndicatorView()
@@ -66,8 +66,20 @@ class CollectionViewController: UICollectionViewController {
         } else {
             plusHeightForOpenedCells[cellIndexPath] = nil
         }
+        guard let cell = collectionView.cellForItem(at: cellIndexPath) as? CustomCell else { return }
+        cell.openedState.toggle()
         UIView.animate(withDuration: 0.2, delay: 0) {
-            self.collectionView.reloadItems(at: [cellIndexPath])
+            self.collectionView.performBatchUpdates {
+                if notification.name == Notification.Name("Opening") {
+                    cell.frame.size.height += self.plusHeightForOpenedCells[cellIndexPath]!
+                    cell.changeDescriptionButtonState(opened: true)
+                    cell.layoutIfNeeded()
+                } else if notification.name == Notification.Name("Closing") {
+                    cell.frame.size.height = self.collectionViewModel.getSizeForItem().1
+                    cell.changeDescriptionButtonState(opened: false)
+                    cell.layoutIfNeeded()
+                }
+            }
         }
         centralCell = nil
     }
@@ -76,6 +88,16 @@ class CollectionViewController: UICollectionViewController {
         if !collectionView.isDecelerating {
         resizeCellInCenter()
         }
+    }
+    
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        print(collectionView.safeAreaInsets)
+        if UIDevice.current.orientation == UIDeviceOrientation.landscapeRight {
+            collectionView.verticalScrollIndicatorInsets.right = size.width - 47 - 6
+        } else {
+            collectionView.verticalScrollIndicatorInsets.right = 0
+        }
+        print(collectionView.safeAreaInsets)
     }
     
     private func configureCollectionView() {

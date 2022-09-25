@@ -10,17 +10,14 @@ import UIKit
 
 class SearchView: UIView {
     
-    var searchViewModel: SearchViewModelDelegate!
-    weak var viewController: SearchVCDelegate!
     var searchTextField = UITextField()
-    private var activityIndicator = UIActivityIndicatorView()
-    private var networkManager: NetManager!
-    private var textFieldWidthAnchor: NSLayoutConstraint?
-    private var textFieldHeightAnchor: NSLayoutConstraint?
-    private var foldedWidthAnchor: NSLayoutConstraint?
-    private var foldedHeightAnchor: NSLayoutConstraint?
-    private var centerYTextFieldAnchor: NSLayoutConstraint?
-    private var liftedCenterYTextFieldAnchor: NSLayoutConstraint?
+    var activityIndicator = UIActivityIndicatorView()
+    var textFieldWidthAnchor: NSLayoutConstraint?
+    var textFieldHeightAnchor: NSLayoutConstraint?
+    var foldedWidthAnchor: NSLayoutConstraint?
+    var foldedHeightAnchor: NSLayoutConstraint?
+    var centerYTextFieldAnchor: NSLayoutConstraint?
+    var liftedCenterYTextFieldAnchor: NSLayoutConstraint?
     private let lightBlueColor = UIColor(red: 0 / 255,
                                   green: 128 / 255,
                                   blue: 255 / 255,
@@ -60,7 +57,6 @@ class SearchView: UIView {
         searchTextField.autocorrectionType = .no
         searchTextField.layer.cornerRadius = height / 3
         searchTextField.layer.masksToBounds = true
-        searchTextField.delegate = self
         configureAndAddPlaceholder()
         layoutIfNeeded()
     }
@@ -80,7 +76,7 @@ class SearchView: UIView {
         configureAndAddPlaceholder()
     }
     
-    private func configureAndAddPlaceholder() {
+    func configureAndAddPlaceholder() {
         let centeredParagraphStyle = NSMutableParagraphStyle()
         centeredParagraphStyle.alignment = .center
         searchTextField.attributedPlaceholder = NSAttributedString(string: "Enter movie name or part of it",
@@ -100,71 +96,6 @@ class SearchView: UIView {
             activityIndicator.centerYAnchor.constraint(equalTo: centerYAnchor),
             activityIndicator.centerXAnchor.constraint(equalTo: centerXAnchor)
         ])
-    }
-}
-
-//MARK: - UITextFieldDelegate
-extension SearchView: UITextFieldDelegate {
-    func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
-        textField.placeholder = String()
-        
-        if UIDevice.current.orientation.isLandscape {
-            centerYTextFieldAnchor?.isActive = false
-            liftedCenterYTextFieldAnchor?.isActive = true
-            
-            UIView.animate(withDuration: 0.3) {
-                self.layoutIfNeeded()
-            }
-        }
-        return true
-    }
-    
-    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        guard let movieName = textField.text,
-              movieName.isEmpty == false
-        else { return false }
-        
-        textField.textColor = textField.backgroundColor
-    
-        self.textFieldWidthAnchor?.isActive = false
-        self.textFieldHeightAnchor?.isActive = false
-        self.foldedWidthAnchor?.isActive = true
-        self.foldedHeightAnchor?.isActive = true
-
-        UIView.animate(withDuration: 1) {
-            self.layoutIfNeeded()
-        } completion: { _ in
-            self.activityIndicator.startAnimating()
-            self.searchViewModel.find(movie: movieName) { [weak self] in
-                self?.activityIndicator.stopAnimating()
-                self?.viewController.goToCollection()
-            }
-            
-            guard let liftedAnchor = self.liftedCenterYTextFieldAnchor else { return }
-            liftedAnchor.isActive = false
-            self.centerYTextFieldAnchor?.isActive = true
-            self.layoutIfNeeded()
-        }
-        searchTextField.resignFirstResponder()
-        return true
-    }
-    
-    func checkNeedMoveSearchTextField(newViewSize: CGSize) {
-        if searchTextField.isFirstResponder {
-            searchTextField.resignFirstResponder()
-            if newViewSize.width > frame.width {
-                centerYTextFieldAnchor?.isActive = false
-                liftedCenterYTextFieldAnchor?.isActive = true
-            } else {
-                liftedCenterYTextFieldAnchor?.isActive = false
-                centerYTextFieldAnchor?.isActive = true
-            }
-            UIView.animate(withDuration: 0.3) {
-                self.layoutIfNeeded()
-            } completion: { _ in
-                self.searchTextField.becomeFirstResponder()
-            }
-        }
     }
 }
 

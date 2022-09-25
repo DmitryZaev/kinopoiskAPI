@@ -7,7 +7,7 @@
 
 import Foundation
 
-class CollectionViewModel: CollectionViewModelDelegate {
+class CollectionViewModel: CollectionViewModelProtocol {
     
     var viewHeight: Double!
     var viewWidth: Double!
@@ -36,8 +36,8 @@ class CollectionViewModel: CollectionViewModelDelegate {
     }
     
     func getCellModel(for index: Int, opened: Bool, completion: @escaping (CellModel) -> Void) {
-        let movie = movies.value[index]
         
+        let movie = movies.value[index]
         let cellName = movie.name ?? "??????????????"
         var cellYear = "????"
         if let year = movie.year, year != 0 {

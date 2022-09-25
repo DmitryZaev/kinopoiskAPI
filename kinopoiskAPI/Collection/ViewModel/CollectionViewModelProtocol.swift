@@ -1,5 +1,5 @@
 //
-//  CollectionViewModelDelegate.swift
+//  CollectionViewModelProtocol.swift
 //  kinopoiskAPI
 //
 //  Created by Dmitry Victorovich on 14.07.2022.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol CollectionViewModelDelegate {
+protocol CollectionViewModelProtocol {
     var viewHeight: Double! { get set }
     var viewWidth: Double! { get set }
     var movies: Dynamic<[MovieModel]>! { get set }

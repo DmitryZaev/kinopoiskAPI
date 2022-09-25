@@ -27,6 +27,10 @@ class NetworkManager: NetManager {
             if let error = error {
                 print(error.localizedDescription)
             }
+            
+            if let response = response {
+                print(response)
+            }
 
             guard let data = data else { return }
             let movies = self.obtainMovies(from: data)

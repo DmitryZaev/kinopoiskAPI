@@ -7,10 +7,10 @@
 
 import Foundation
 
-class SearchViewModel: SearchViewModelDelegate {
+class SearchViewModel: SearchViewModelProtocol {
     
     var networkManager: NetManager!
-    var collectionViewModel: CollectionViewModelDelegate!
+    var collectionViewModel: CollectionViewModelProtocol!
     var searchTextFieldModel: Dynamic<SearchSubviewsModel>?
     
     func createSearchTextFieldModel(viewWidth: Double, viewHeight: Double) {
