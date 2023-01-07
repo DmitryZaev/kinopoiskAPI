@@ -26,19 +26,27 @@ class SearchViewModel: SearchViewModelProtocol {
     }
     
     func find(movie: String, completion: @escaping () -> Void) {
-        var desiredMovie = movie.lowercased()
+        Task.detached { [unowned self] in
+            let desiredMovie  = await self.makeDesiredMovieNameFrom(movieName: movie)
+            let movies = try await self.networkManager.findInKinopoisk(movie: desiredMovie,
+                                                                       with: nil,
+                                                                       ascendingSorting: nil)
+            await MainActor.run { [unowned self] in
+                self.collectionViewModel.movies = Dynamic(movies)
+                self.collectionViewModel.title = Dynamic(desiredMovie)
+                completion()
+            }
+        }
+    }
+    
+    private func makeDesiredMovieNameFrom(movieName: String) async -> String {
+        var desiredMovie = movieName.lowercased()
         while desiredMovie.last == " " {
             desiredMovie.removeLast()
         }
         while desiredMovie.first == " " {
             desiredMovie.removeFirst()
         }
-        networkManager.findInKinopoisk(movie: desiredMovie, with: nil, ascendingSorting: nil) { [unowned self] movies in
-            self.collectionViewModel.movies = Dynamic(movies)
-            self.collectionViewModel.title = Dynamic(desiredMovie)
-                DispatchQueue.main.async {
-                    completion()
-            }
-        }
+        return desiredMovie
     }
 }

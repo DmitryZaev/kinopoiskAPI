@@ -25,9 +25,14 @@ class CollectionViewModel: CollectionViewModelProtocol {
     }
     
     func update(sortedBy: String, ascendingSort: Bool, completion: @escaping () -> Void) {
-        networkManager.findInKinopoisk(movie: title.value, with: sortedBy, ascendingSorting: ascendingSort) { [unowned self] newMovies in
-            self.movies.value = newMovies
-            completion()
+        Task.detached { [unowned self] in
+            let newMovies = try await networkManager.findInKinopoisk(movie: title.value,
+                                                                     with: sortedBy,
+                                                                     ascendingSorting: ascendingSort)
+            await MainActor.run { [unowned self] in
+                self.movies.value = newMovies
+                completion()
+            }
         }
     }
     
@@ -63,13 +68,21 @@ class CollectionViewModel: CollectionViewModelProtocol {
     
     func getImageForCell(index: Int, completion: @escaping (Data) -> Void) {
         let movie = movies.value[index]
-        if let imageLink = movie.poster?.url {
-            networkManager.getImageData(from: imageLink) { data in
-                DispatchQueue.main.async {
-                    completion(data)
+        let imageLink : String
+        if let poster = movie.poster {
+            imageLink = poster.url
+            Task.detached { [weak self] in
+                guard let imageData = try await self?.networkManager.getImageData(from: imageLink) else { return }
+                await MainActor.run {
+                    completion(imageData)
                 }
             }
+        } else {
+            guard let noImageUrl = Bundle.main.url(forResource: "haveNoImage", withExtension: "jpeg"),
+                  let imageData = try? Data(contentsOf: noImageUrl) else { return }
+            completion(imageData)
         }
+        
     }
     
     func openSite(for id: String) {

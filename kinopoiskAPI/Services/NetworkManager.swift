@@ -9,33 +9,27 @@ import Foundation
 import UIKit
 
 protocol NetManager {
-    func findInKinopoisk(movie: String, with sorting: String?, ascendingSorting: Bool?, comletion: @escaping ([MovieModel]) -> Void)
-    func getImageData(from link: String, completion: @escaping (Data) -> Void)
+    func findInKinopoisk(movie: String, with sorting: String?, ascendingSorting: Bool?) async throws -> [MovieModel]
+    func getImageData(from link: String) async throws -> Data?
     func openInKinopoiskSite(with id: String)
 }
 
 class NetworkManager: NetManager {
     
-    func findInKinopoisk(movie: String, with sorting: String?, ascendingSorting: Bool?, comletion: @escaping ([MovieModel]) -> Void) {
+    func findInKinopoisk(movie: String, with sorting: String?, ascendingSorting: Bool?) async throws -> [MovieModel] {
         
         guard let url = obtainRightURL(movie: movie,
                                        with: sorting,
-                                       ascendingSorting: ascendingSorting) else { return }
-        
-        let session = URLSession.shared
-        session.dataTask(with: url) { data, response, error in
-            if let error = error {
-                print(error.localizedDescription)
-            }
-            
-            if let response = response {
-                print(response)
-            }
-
-            guard let data = data else { return }
+                                       ascendingSorting: ascendingSorting) else { return [MovieModel]() }
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else { return [MovieModel]() }
             let movies = self.obtainMovies(from: data)
-            comletion(movies)
-        }.resume()
+            return movies
+        } catch let error as NSError {
+            print(error.localizedDescription)
+            return [MovieModel]()
+        }
     }
     
     private func obtainRightURL(movie: String, with sorting: String?, ascendingSorting: Bool?) -> URL? {
@@ -97,22 +91,23 @@ class NetworkManager: NetManager {
         return movies
     }
     
-    func getImageData(from link: String, completion: @escaping (Data) -> Void) {
+    func getImageData(from link: String) async throws -> Data? {
         
         if let imageData = CacheManager.getImageFromCache(for: link) {
-            completion(imageData)
+            return imageData
         } else {
-            guard let url = URL(string: link) else { return }
-            let session = URLSession.shared
-            session.dataTask(with: url) { data, response, error in
-                if let error = error {
-                    print(error.localizedDescription)
+            guard let url = URL(string: link) else { return nil }
+            do {
+                let (data, response) = try await URLSession.shared.data(from: url)
+                guard (response as? HTTPURLResponse)?.statusCode == 200 else { return nil }
+                defer {
+                    CacheManager.putImageToCache(imageData: data, for: link)
                 }
-                
-                guard let data = data else { return }
-                completion(data)
-                CacheManager.putImageToCache(imageData: data, for: link)
-            }.resume()
+                return data
+            } catch let error as NSError {
+                print(error.localizedDescription)
+                return nil
+            }
         }
     }
     
